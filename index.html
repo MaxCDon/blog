@@ -146,6 +146,99 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://maxcdon.github.io/blog/2021/03/31/git-rules/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="Max Cheng">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MaxCheng'blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/blog/2021/03/31/git-rules/" class="post-title-link" itemprop="url">【Git分支管理】配合阿里云云效流水线实现前端CI/DI</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2021-03-31 15:23:40 / Modified: 15:29:33" itemprop="dateCreated datePublished" datetime="2021-03-31T15:23:40+08:00">2021-03-31</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/35b9ca4972f7459986df306882fd407a~tplv-k3u1fbpfcp-watermark.image" alt=""></p>
+<h1 id="分支类型"><a href="#分支类型" class="headerlink" title="分支类型"></a>分支类型</h1><ul>
+<li><p>mater 分支：主分支也是保护分支，用于部署生产环境和预发环境，只能由 release 分支、hotfix 分支合并，为保证主分支的稳定性任何人都无法在此分支直接提交代码。</p>
+</li>
+<li><p>develop 分支：开发分支同样也是保护分支，保持最新开发完成代码的同步。</p>
+</li>
+<li><p>feature 分支：新功能的开发分支，基于 develop 分支创建，功能开发完成后合并入 develop 分支，命名格式  feature/module_user_date</p>
+</li>
+<li><p>release 分支：提测分支，基于 develop 分支创建，测试过程中的bug修复均在此分支提交，测试完成后合入 master 分支，命名格式 release/module_user_date</p>
+</li>
+<li><p>hotfix 分支：紧急修复分支，基于 master 分支创建，用于修复线上紧急 bug 和 开发紧急需求，完成后合入 master 分支，命名格式  hotfix/module_user_date</p>
+</li>
+</ul>
+<h1 id="部署方式"><a href="#部署方式" class="headerlink" title="部署方式"></a>部署方式</h1><ul>
+<li><p>联调环境：云效流水线点击运行选择远程分支部署</p>
+</li>
+<li><p>测试环境：云效流水线点击运行选择远程分支部署</p>
+</li>
+<li><p>预发环境：监听远程仓库 master 分支更新，自动触发部署</p>
+</li>
+<li><p>生产环境：监听远程仓库 master 分支更新，并且需要云效流水线点击确认部署</p>
+</li>
+<li><p>演示环境：监听远程仓库 master 分支更新，并且需要云效流水线点击确认部署</p>
+</li>
+</ul>
+<h1 id="开发流程"><a href="#开发流程" class="headerlink" title="开发流程"></a>开发流程</h1><h2 id="正常排期流程"><a href="#正常排期流程" class="headerlink" title="正常排期流程"></a>正常排期流程</h2><h3 id="开发阶段"><a href="#开发阶段" class="headerlink" title="开发阶段"></a>开发阶段</h3><p>从 develop 分支检出 feature/module_user_date 功能分支进行开发，<br>开发完成后功能分支 merge 合入 develop 分支  </p>
+<h3 id="提测阶段"><a href="#提测阶段" class="headerlink" title="提测阶段"></a>提测阶段</h3><p>从 develop 分支检出 release/module_user_date 提测分支<br>提测过程中在 release/module_user_date 分支提交代码<br>更新代码后通过云效流水线点击运行选择分支部署测试环境</p>
+<h3 id="预发阶段"><a href="#预发阶段" class="headerlink" title="预发阶段"></a>预发阶段</h3><p>将测试通过的 release/module_user_date 提测分支 merge 合入 master分支<br>自动触发预发环境部署<br>此时修复 bug 从 master 分支检出 hotfix/module_user_date 修复分支<br>修复后合回 master 分支</p>
+<h3 id="生产阶段"><a href="#生产阶段" class="headerlink" title="生产阶段"></a>生产阶段</h3><p>验收后的版本通过云效流水线手动触发生产环境、演示环境部署<br>将 master 分支合入 development 分支<br>并且删除远程仓库 feature/module_user_date、release/module_user_date、hotfix/module_user_date 三类分支</p>
+<p>END</p>
+<h2 id="紧急需求-紧急修复流程"><a href="#紧急需求-紧急修复流程" class="headerlink" title="紧急需求/紧急修复流程"></a>紧急需求/紧急修复流程</h2><h3 id="开发阶段-1"><a href="#开发阶段-1" class="headerlink" title="开发阶段"></a>开发阶段</h3><p>从 master 分支检出 hotfix/module_user_date 紧急功能分支进行开发</p>
+<h3 id="提测阶段-1"><a href="#提测阶段-1" class="headerlink" title="提测阶段"></a>提测阶段</h3><p>将多个 hotfix/module_user_date 分支合并成一个<br>提测过程中在 hotfix/module_user_date 分支提交代码<br>更新代码后通过云效流水线手动选择分支部署测试环境</p>
+<h3 id="预发阶段-1"><a href="#预发阶段-1" class="headerlink" title="预发阶段"></a>预发阶段</h3><p>将测试通过的 hotfix/module_user_date 提测分支 merge 合入 master分支<br>自动触发预发环境部署<br>此时修复 bug 从 master 分支检出 hotfix/module_user_date 修复分支<br>修复后合回 master 分支</p>
+<h3 id="生产阶段-1"><a href="#生产阶段-1" class="headerlink" title="生产阶段"></a>生产阶段</h3><p>验收后的版本通过云效流水线手动触发生产环境、演示环境部署<br>将 master 分支合入 development 分支<br>并且删除远程仓库 hotfix/module_user_date 分支</p>
+<p>END</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://maxcdon.github.io/blog/2021/02/28/protractor/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -177,7 +270,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-03-01 10:09:14" itemprop="dateModified" datetime="2021-03-01T10:09:14+08:00">2021-03-01</time>
+                <time title="Modified: 2021-03-31 15:29:33" itemprop="dateModified" datetime="2021-03-31T15:29:33+08:00">2021-03-31</time>
               </span>
 
           
@@ -299,7 +392,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-03-01 10:09:14" itemprop="dateModified" datetime="2021-03-01T10:09:14+08:00">2021-03-01</time>
+                <time title="Modified: 2021-03-31 15:29:33" itemprop="dateModified" datetime="2021-03-31T15:29:33+08:00">2021-03-31</time>
               </span>
 
           
@@ -406,7 +499,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-03-01 10:09:14" itemprop="dateModified" datetime="2021-03-01T10:09:14+08:00">2021-03-01</time>
+                <time title="Modified: 2021-03-31 15:29:33" itemprop="dateModified" datetime="2021-03-31T15:29:33+08:00">2021-03-31</time>
               </span>
 
           
@@ -493,7 +586,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-03-01 10:09:14" itemprop="dateModified" datetime="2021-03-01T10:09:14+08:00">2021-03-01</time>
+                <time title="Modified: 2021-03-31 15:29:33" itemprop="dateModified" datetime="2021-03-31T15:29:33+08:00">2021-03-31</time>
               </span>
 
           
@@ -650,7 +743,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-03-01 10:09:14" itemprop="dateModified" datetime="2021-03-01T10:09:14+08:00">2021-03-01</time>
+                <time title="Modified: 2021-03-31 15:29:33" itemprop="dateModified" datetime="2021-03-31T15:29:33+08:00">2021-03-31</time>
               </span>
 
           
@@ -768,7 +861,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/blog/archives/">
         
-          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
