@@ -47,7 +47,7 @@ jobs:
 
       - name: Commit files
         run: |
-          cd PUBLISH_DIR
+          cd $PUBLISH_DIR
           git init
           git config --local user.name $USER_NAME
           git config --local user.email $USER_EMAIL
