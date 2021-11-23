@@ -99,5 +99,7 @@ theme: next
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repository: git@github.com:MaxCDon/blog.git
+  repo: git@github.com:MaxCDon/blog.git
   branch: master
+  name: MaxCDon
+  email: immaxcheng@foxmail.com
