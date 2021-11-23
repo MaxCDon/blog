@@ -44,7 +44,7 @@ jobs:
         env:
           GIT_NAME: MaxCheng
           GIT_EMAIL: immaxcheng@foxmail.com
-          REPO: github.com:MaxCDon/blog.git
+          REPO: git@github.com:MaxCDon/blog.git
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           cd ./public && git init && git add .
