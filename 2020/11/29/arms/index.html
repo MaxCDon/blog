@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"maxcdon.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="为什么要引入前端监控？用户访问业务时，整个访问过程大致可以分为三个阶段：页面生产时（服务器端状态）、页面加载时和页面运行时。为了保证线上业务稳定运行，我们会在服务器端对业务的运行状态进行各种监控。现有的服务器端监控系统相对已经很成熟，而页面加载和页面运行时的状态监控一直比较欠缺。例如：  无法第一时间获知用户访问您的站点时遇到的错误。 各个国家、各个地区的用户访问您的站点的真实速度未知。 每个应">
+<meta property="og:type" content="article">
+<meta property="og:title" content="阿里云ARMS前端监控Angular接入实战">
+<meta property="og:url" content="https://maxcdon.github.io/blog/2020/11/29/arms/index.html">
+<meta property="og:site_name" content="MaxCheng&#39;blog">
+<meta property="og:description" content="为什么要引入前端监控？用户访问业务时，整个访问过程大致可以分为三个阶段：页面生产时（服务器端状态）、页面加载时和页面运行时。为了保证线上业务稳定运行，我们会在服务器端对业务的运行状态进行各种监控。现有的服务器端监控系统相对已经很成熟，而页面加载和页面运行时的状态监控一直比较欠缺。例如：  无法第一时间获知用户访问您的站点时遇到的错误。 各个国家、各个地区的用户访问您的站点的真实速度未知。 每个应">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6dc3e304a283430d83d372b8fb50faa0~tplv-k3u1fbpfcp-watermark.image">
+<meta property="og:image" content="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2066816384bd474c94600488c7126456~tplv-k3u1fbpfcp-watermark.image">
+<meta property="og:image" content="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/144caeda666e446380cbe8eeaaae403c~tplv-k3u1fbpfcp-watermark.image">
+<meta property="og:image" content="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9d75f559944f4573a0a9b05d65291e10~tplv-k3u1fbpfcp-watermark.image">
+<meta property="article:published_time" content="2020-11-29T09:11:01.000Z">
+<meta property="article:modified_time" content="2020-12-18T02:00:30.335Z">
+<meta property="article:author" content="Max Cheng">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6dc3e304a283430d83d372b8fb50faa0~tplv-k3u1fbpfcp-watermark.image">
+
+<link rel="canonical" href="https://maxcdon.github.io/blog/2020/11/29/arms/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>阿里云ARMS前端监控Angular接入实战 | MaxCheng'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">MaxCheng'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">step by step</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://maxcdon.github.io/blog/2020/11/29/arms/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="Max Cheng">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MaxCheng'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          阿里云ARMS前端监控Angular接入实战
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-11-29 17:11:01" itemprop="dateCreated datePublished" datetime="2020-11-29T17:11:01+08:00">2020-11-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-18 10:00:30" itemprop="dateModified" datetime="2020-12-18T10:00:30+08:00">2020-12-18</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6dc3e304a283430d83d372b8fb50faa0~tplv-k3u1fbpfcp-watermark.image" alt=""></p>
+<h1 id="为什么要引入前端监控？"><a href="#为什么要引入前端监控？" class="headerlink" title="为什么要引入前端监控？"></a>为什么要引入前端监控？</h1><p>用户访问业务时，整个访问过程大致可以分为三个阶段：页面生产时（服务器端状态）、页面加载时和页面运行时。为了保证线上业务稳定运行，我们会在服务器端对业务的运行状态进行各种监控。现有的服务器端监控系统相对已经很成熟，而页面加载和页面运行时的状态监控一直比较欠缺。例如：</p>
+<ul>
+<li>无法第一时间获知用户访问您的站点时遇到的错误。</li>
+<li>各个国家、各个地区的用户访问您的站点的真实速度未知。</li>
+<li>每个应用内有大量的异步数据调用，而它们的性能、成功率都是未知的。<br>随着前端项目工程化得发展，我们对前端项目的性能要求也越来越高，如果没有引入前端监控，团队对前端线上环境的运行状况是很抽象的。在之前的工作中，经常遇到用户在使用业务得过程中出现异常，此时无法很快得定位并复现用户遇到的问题，导致在维护中消耗了较大得工作量。如果有前端监控得存在我们就可以快速定位到异常并做出修复，能够大幅提升工作效率以及用户体验。</li>
+</ul>
+<h1 id="选择一款优秀的前端监控"><a href="#选择一款优秀的前端监控" class="headerlink" title="选择一款优秀的前端监控"></a>选择一款优秀的前端监控</h1><p>挑选前端监控之前，首先确定项目对监控得需求，在我们项目中需求大致分为几点：</p>
+<ul>
+<li>JS异常信息统计</li>
+<li>页面加载效率分析</li>
+<li>API接口调用信息统计</li>
+<li>监控可视化呈现<br>针对这些需求，就可以有目标性地挑选一款符合项目的前端监控。目前开源的Sentry和阿里云团队的ARMS都是比较全面的监控，基本满足我们项目的需求。<h2 id="Sentry"><a href="#Sentry" class="headerlink" title="Sentry"></a>Sentry</h2>正如其名「哨兵」，可以实时监控生产环境上的系统运行状态，一旦发生异常会第一时间把报错的路由路径、错误所在文件等详细信息以邮件形式通知我们，并且利用错误信息的堆栈跟踪快速定位到需要处理的问题。</li>
+</ul>
+<p>优点：开源对各种前端框架的友好支持 (Vue、React、Angular)支持 SourceMap。Sentry 官方提供的免费服务有次数限制，达到一定限制后继续使用就需要收费，但是我们可以利用 Sentry 的开源库在自己的服务器上搭建服务，官方已经提供了完善的操作文档。</p>
+<h2 id="ARMS"><a href="#ARMS" class="headerlink" title="ARMS"></a>ARMS</h2><p>ARMS前端监控专注于对Web场景、Weex场景和小程序场景的监控，从页面打开速度（测速）、页面稳定性（JS Error）和外部服务调用成功率（API）这三个方面监测Web和小程序页面的健康度。</p>
+<p>优点：重点监控页面的加载过程和运行时状态，同时将页面加载性能、运行时异常以及API调用状态和耗时等数据，上报到日志服务器。之后借助ARMS提供的海量实时日志分析和处理服务，对当前线上所有真实用户的访问情况进行监控。最后通过直观的报表展示。</p>
+<p>可以看出Sentry更加专注于异常信息处理，ARMS则从更多的维度统计系统信息，并且通过丰富得可视化呈现，由此看来ARMS在这个项目中是更优得选择。</p>
+<h1 id="Angular项目接入ARMS监控"><a href="#Angular项目接入ARMS监控" class="headerlink" title="Angular项目接入ARMS监控"></a>Angular项目接入ARMS监控</h1><p>在选定监控框架后，就要开始着手接入项目了，ARMS文档有两种接入方式提供给我们选择:</p>
+<h2 id="cdh方式为Web应用安装ARMS前端监控探针"><a href="#cdh方式为Web应用安装ARMS前端监控探针" class="headerlink" title="cdh方式为Web应用安装ARMS前端监控探针"></a>cdh方式为Web应用安装ARMS前端监控探针</h2><p>cdh的方式比较便捷，在阿里云后台创建好项目后，直接复制ARMS提供的<code>&lt;script&gt;</code>标签中代码至根页面的<code>&lt;body&gt;</code>标签中即可生效。cdh方式又分为异步加载和同步加载。</p>
+<ul>
+<li>异步加载：又称为非阻塞加载，表示浏览器在下载执行JS之后还会继续处理后续页面。若对页面性能的要求非常高，建议使用此方式。</li>
+<li>同步加载：又称为阻塞加载，表示当前JS加载完毕后才会进行后续处理。如需捕捉从页面打开到关闭的整个过程中的JS错误和资源加载错误，建议cdh引入使用此方式。</li>
+</ul>
+<h2 id="npm方式为Web应用安装ARMS前端监控探针"><a href="#npm方式为Web应用安装ARMS前端监控探针" class="headerlink" title="npm方式为Web应用安装ARMS前端监控探针"></a>npm方式为Web应用安装ARMS前端监控探针</h2><p>我们项目中选择npm方式安装探针</p>
+<p>在npm仓库中安装alife-logger</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install alife-logger --save</span><br></pre></td></tr></table></figure>
+
+<p>SDK以<code>BrowserLogger.singleton</code>方式初始化</p>
+<p>arms.ts</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> BrowserLogger <span class="keyword">from</span> <span class="string">'alife-logger'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; environment &#125; <span class="keyword">from</span> <span class="string">'src/environments/environment'</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * ARMS前端监控</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">let</span> logger = <span class="literal">null</span>;</span><br><span class="line"><span class="keyword">let</span> environmentType = <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">switch</span> (environment.type) &#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">'dev'</span>:</span><br><span class="line">    environmentType = <span class="string">'daily'</span>;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">'local'</span>:</span><br><span class="line">    environmentType = <span class="string">'local'</span>;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">'pre'</span>:</span><br><span class="line">    environmentType = <span class="string">'pre'</span>;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">'rep'</span>:</span><br><span class="line">    environmentType = <span class="string">'gray'</span>;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">'prod'</span>:</span><br><span class="line">    environmentType = <span class="string">'prod'</span>;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (environment.type !== <span class="string">'local'</span>) &#123;</span><br><span class="line">    logger = BrowserLogger.singleton(&#123;</span><br><span class="line">      pid: <span class="string">'d465464j9@4caac5459*****'</span>, <span class="comment">// 项目唯一ID，由ARMS在创建站点时自动生成</span></span><br><span class="line">      appType: <span class="string">'web'</span>, <span class="comment">// 项目类型</span></span><br><span class="line">      imgUrl: <span class="string">'https://arms-retcode.aliyuncs.com/r.png?'</span>, <span class="comment">// 日志上传地址</span></span><br><span class="line">      sendResource: <span class="literal">true</span>, <span class="comment">// 上报页面静态资源</span></span><br><span class="line">      enableLinkTrace: <span class="literal">true</span>, <span class="comment">// 进行前后端链路追踪</span></span><br><span class="line">      behavior: <span class="literal">true</span>, <span class="comment">// 是否为了便于排查错误而记录报错的用户行为</span></span><br><span class="line">      enableSPA: <span class="literal">true</span>, <span class="comment">// 监听页面的hashchange事件并重新上报PV</span></span><br><span class="line">      useFmp: <span class="literal">true</span>, <span class="comment">// 采集首屏FMP</span></span><br><span class="line">      environment: environmentType, <span class="comment">// 当前环境</span></span><br><span class="line">      release: environment.version, <span class="comment">// 项目版本号</span></span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="built_in">console</span>.error(<span class="string">'init arms fail'</span>, e);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> logger;</span><br></pre></td></tr></table></figure>
+
+<p>在页面初始化的时候引入<code>arms.ts</code>重启项目就可以看到探针已经生效。<br><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2066816384bd474c94600488c7126456~tplv-k3u1fbpfcp-watermark.image" alt=""></p>
+<h2 id="Angular自定义异常处理"><a href="#Angular自定义异常处理" class="headerlink" title="Angular自定义异常处理"></a>Angular自定义异常处理</h2><p>当用户进入项目时ARMS就会把前端监控日志上报，在ARMS后台可以看到访问速度、UV和PV统计、API请求日志信息。<br>到这里原本以为一切搞定了，但是自测过程中发现JS错误信息无法自动上报，我立刻再去看了一遍ARMS的接入文档，发现文档上也没有关于Anuglar项目的接入教程。然后开始各种Goole也没有找到关于Angular接入ARMS的攻略，最后我只能加了官方钉钉群去咨询开发团队，得到了以下解答。</p>
+<p><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/144caeda666e446380cbe8eeaaae403c~tplv-k3u1fbpfcp-watermark.image" alt=""></p>
+<p>根据这个线索，我终于定位到JS异常没有上报的原因，是因为Angular框架底层对JS抛出的异常进行统一捕获处理，所以ARMS无法监听到JS异常，我们需要通过ARMS提供的<code>error()</code>方法手动上报异常信息。</p>
+<p><code>error()</code></p>
+<p>调用error()接口来上报页面中的JS错误或使用者想关注的异常。一般情况下，SDK会监听页面全局的Error并调用此接口上报异常信息，但由于浏览器的同源策略往往无法获取错误的具体信息，此时就需要使用者手动上报。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">arms.error(error, pos)</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>类型</th>
+<th>描述</th>
+<th>是否必选</th>
+<th>默认值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>error</td>
+<td></td>
+<td>Error</td>
+<td>JS的Error对象</td>
+<td>是</td>
+</tr>
+<tr>
+<td>pos</td>
+<td>Object</td>
+<td>错误发生的位置，包含以下3个属性</td>
+<td>否</td>
+<td>无</td>
+</tr>
+<tr>
+<td>pos.filename</td>
+<td>String</td>
+<td>错误发生的文件名</td>
+<td>否</td>
+<td>无</td>
+</tr>
+<tr>
+<td>pos.lineno</td>
+<td>Number</td>
+<td>错误发生的行数</td>
+<td>否</td>
+<td>无</td>
+</tr>
+<tr>
+<td>pos.colno</td>
+<td>Number</td>
+<td>错误发生的列数</td>
+<td>否</td>
+<td>无</td>
+</tr>
+</tbody></table>
+<p>Angular提供了钩子让我们自定义异常处理，我们要做的就是创建一个类，该类实现<code>ErrorHandler</code>来自<code>@angular/core</code>程序包的接口。该类必须实现<code>handleError()</code>方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; ErrorHandler &#125; <span class="keyword">from</span> <span class="string">'@angular/core'</span>;</span><br><span class="line"><span class="keyword">import</span> arms <span class="keyword">from</span> <span class="string">'./arms'</span>;</span><br><span class="line"><span class="keyword">import</span> &#123; environment &#125; <span class="keyword">from</span> <span class="string">'src/environments/environment'</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 全局异常处理</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">export</span> <span class="class"><span class="keyword">class</span> <span class="title">GlobalErrorhandler</span> <span class="title">implements</span> <span class="title">ErrorHandler</span> </span>&#123;</span><br><span class="line">  handleError(error) &#123;</span><br><span class="line">    <span class="keyword">switch</span> (environment.type) &#123;</span><br><span class="line">      <span class="keyword">case</span> <span class="string">'prod'</span>:</span><br><span class="line">        arms.error(error);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> <span class="string">'local'</span>:</span><br><span class="line">        <span class="built_in">console</span>.error(<span class="string">'Error from global error handler'</span>, error);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">default</span>:</span><br><span class="line">        <span class="built_in">console</span>.error(<span class="string">'Error from global error handler'</span>, error);</span><br><span class="line">        arms.error(error);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后在<code>app.modules.ts</code>，告诉Angular它应该使用我们的错误处理程序，可以通过在providers配置中添加以下条目来实现</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">providers: [</span><br><span class="line">  &#123; <span class="attr">provide</span>: ErrorHandler, <span class="attr">useClass</span>: GlobalErrorhandler &#125;,</span><br><span class="line">],</span><br></pre></td></tr></table></figure>
+<p>部署项目可以看到异常信息可以上报至ARMS后台，大功告成~</p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9d75f559944f4573a0a9b05d65291e10~tplv-k3u1fbpfcp-watermark.image" alt=""></p>
+<h1 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h1><p>感谢观看，若有不足望提出指正！</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2020/05/20/prettier/" rel="prev" title="前端代码格式工具Prettier">
+      <i class="fa fa-chevron-left"></i> 前端代码格式工具Prettier
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/12/18/summary-2020/" rel="next" title="2020黑天鹅后学会拥抱变化">
+      2020黑天鹅后学会拥抱变化 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#为什么要引入前端监控？"><span class="nav-number">1.</span> <span class="nav-text">为什么要引入前端监控？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#选择一款优秀的前端监控"><span class="nav-number">2.</span> <span class="nav-text">选择一款优秀的前端监控</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Sentry"><span class="nav-number">2.1.</span> <span class="nav-text">Sentry</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ARMS"><span class="nav-number">2.2.</span> <span class="nav-text">ARMS</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Angular项目接入ARMS监控"><span class="nav-number">3.</span> <span class="nav-text">Angular项目接入ARMS监控</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#cdh方式为Web应用安装ARMS前端监控探针"><span class="nav-number">3.1.</span> <span class="nav-text">cdh方式为Web应用安装ARMS前端监控探针</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#npm方式为Web应用安装ARMS前端监控探针"><span class="nav-number">3.2.</span> <span class="nav-text">npm方式为Web应用安装ARMS前端监控探针</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Angular自定义异常处理"><span class="nav-number">3.3.</span> <span class="nav-text">Angular自定义异常处理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#最后"><span class="nav-number">4.</span> <span class="nav-text">最后</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Max Cheng</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Max Cheng</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"maxcdon.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="关于 Protractor介绍 Protractor之前需要先介绍一下端到端测试（E2E测试），端到端测试验证应用中的所有层。这不仅包括你的前端代码，还包括所有相关的后端服务和基础设施，它们更能代表你的用户所处的环境。通过测试用户操作如何影响应用，端到端测试通常是提高应用是否正常运行的信心的关键。Protractor 是 Angular 和 AngularJS 应用程序的端到端测试框架，针对在真">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【前端E2E测试】上手Protractor 看这篇就够了">
+<meta property="og:url" content="https://maxcdon.github.io/blog/2021/02/28/protractor/index.html">
+<meta property="og:site_name" content="MaxCheng&#39;blog">
+<meta property="og:description" content="关于 Protractor介绍 Protractor之前需要先介绍一下端到端测试（E2E测试），端到端测试验证应用中的所有层。这不仅包括你的前端代码，还包括所有相关的后端服务和基础设施，它们更能代表你的用户所处的环境。通过测试用户操作如何影响应用，端到端测试通常是提高应用是否正常运行的信心的关键。Protractor 是 Angular 和 AngularJS 应用程序的端到端测试框架，针对在真">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3478ff659a0a4b438865ec46559e6c40~tplv-k3u1fbpfcp-watermark.image">
+<meta property="article:published_time" content="2021-02-28T15:07:39.000Z">
+<meta property="article:modified_time" content="2021-03-01T02:08:29.184Z">
+<meta property="article:author" content="Max Cheng">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3478ff659a0a4b438865ec46559e6c40~tplv-k3u1fbpfcp-watermark.image">
+
+<link rel="canonical" href="https://maxcdon.github.io/blog/2021/02/28/protractor/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>【前端E2E测试】上手Protractor 看这篇就够了 | MaxCheng'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">MaxCheng'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">step by step</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://maxcdon.github.io/blog/2021/02/28/protractor/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="Max Cheng">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MaxCheng'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【前端E2E测试】上手Protractor 看这篇就够了
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-02-28 23:07:39" itemprop="dateCreated datePublished" datetime="2021-02-28T23:07:39+08:00">2021-02-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-03-01 10:08:29" itemprop="dateModified" datetime="2021-03-01T10:08:29+08:00">2021-03-01</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3478ff659a0a4b438865ec46559e6c40~tplv-k3u1fbpfcp-watermark.image" alt=""></p>
+<h1 id="关于-Protractor"><a href="#关于-Protractor" class="headerlink" title="关于 Protractor"></a>关于 Protractor</h1><p>介绍 Protractor之前需要先介绍一下端到端测试（E2E测试），端到端测试验证应用中的所有层。这不仅包括你的前端代码，还包括所有相关的后端服务和基础设施，它们更能代表你的用户所处的环境。通过测试用户操作如何影响应用，端到端测试通常是提高应用是否正常运行的信心的关键。<br>Protractor 是 Angular 和 AngularJS 应用程序的端到端测试框架，针对在真实浏览器中运行的应用程序运行测试，并与用户进行交互，具有以下特性。</p>
+<h2 id="模拟用户真实测试流程"><a href="#模拟用户真实测试流程" class="headerlink" title="模拟用户真实测试流程"></a>模拟用户真实测试流程</h2><p>Protractor 建立在 WebDriverJS 之上，该 WebDriverJS 使用本机事件和特定于浏览器的驱动程序来与用户的应用程序进行交互。</p>
+<h2 id="Angular-支持友好"><a href="#Angular-支持友好" class="headerlink" title="Angular 支持友好"></a>Angular 支持友好</h2><p>Protractor 支持特定于Angular的定位器策略，该策略使你无需进行任何设置即可测试特定于Angular的元素。</p>
+<h2 id="自动等待"><a href="#自动等待" class="headerlink" title="自动等待"></a>自动等待</h2><p>不再需要为测试添加等待和休眠，Protractor 可以在网页完成待处理的任务后自动执行测试的下一步，因此你不必担心等待测试和网页同步。</p>
+<h1 id="安装配置"><a href="#安装配置" class="headerlink" title="安装配置"></a>安装配置</h1><h2 id="安装-Node"><a href="#安装-Node" class="headerlink" title="安装 Node"></a>安装 Node</h2><p>Protractor 是一个  Node.js 项目，你需要先安装 Node 环境，这个前端的小伙伴相信都有，这里也还是贴一下 <a href="https://www.runoob.com/nodejs/nodejs-install-setup.html" target="_blank" rel="noopener">Node 安装教程</a>。</p>
+<h2 id="安装-Jdk"><a href="#安装-Jdk" class="headerlink" title="安装 Jdk"></a>安装 Jdk</h2><p>由于官方文档教程将运行本地独立的 Selenium 服务器来控制浏览器进行测试，你将需要安装 Java 开发工具包（JDK）才能运行独立的Selenium 服务器。这个是 <a href="https://www.runoob.com/java/java-environment-setup.html" target="_blank" rel="noopener">Jdk安装教程</a> , 安装完成后可以通过从命令行运行 <code>java -version</code> 进行检查是否生效。</p>
+<h2 id="安装-Protractor"><a href="#安装-Protractor" class="headerlink" title="安装 Protractor"></a>安装 Protractor</h2><p>完成基础环境的配置，接下来就可以全局安装 Protractor 框架主体</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g protractor</span><br></pre></td></tr></table></figure>
+<p>这个命令会安装两个工具， <code>Protractor</code> 和 <code>webdriver-manager</code>，安装后使用命令行 <code>protractor --version</code>检测是否生效。<br><code>webdriver-manager</code> 是一个辅助工具，可轻松获取正在运行的 Selenium Server 实例。你需要通过以下命令下载必要的二进制文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">webdriver-manager update</span><br></pre></td></tr></table></figure>
+<p>现在就可以启动服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">webdriver-manager start</span><br></pre></td></tr></table></figure>
+<p>这将启动 Selenium 服务器并输出一堆信息日志, 你的 Protractor 测试将向该服务器发送请求以控制本地浏览器。保持该服务器运行，你可以在 <code>http://localhost:4444/wd/hub</code> 上查看有关服务器状态的信息。</p>
+<h1 id="官方用例"><a href="#官方用例" class="headerlink" title="官方用例"></a>官方用例</h1><p>创建一个空的项目文件夹，并在其中创建两个文件, 一个测试代码文件<code>spec.js</code>，一个配置文件 <code>conf.js</code>。<br>让我们从一个简单的测试开始，该测试跳转到示例 AngularJS 应用程序并检查其标题，这是示例“超级计算器”测试页面地址：<a href="http://juliemr.github.io/protractor-demo/" target="_blank" rel="noopener">http://juliemr.github.io/protractor-demo/</a>  </p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// spec.js</span></span><br><span class="line">describe(<span class="string">'Protractor Demo App'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  it(<span class="string">'should have a title'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    browser.get(<span class="string">'http://juliemr.github.io/protractor-demo/'</span>);</span><br><span class="line"></span><br><span class="line">    expect(browser.getTitle()).toEqual(<span class="string">'Super Calculator'</span>);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p><code>describe</code> 和 <code>it</code> 语法来自 <code>Jasmine</code> 框架， <code>browser</code>是 Protractor 创建的全局变量，用于执行浏览器级别的命令，例如使用<code>browser.get</code> 进行导航。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// conf.js</span></span><br><span class="line">exports.config = &#123;</span><br><span class="line">  framework: <span class="string">'jasmine'</span>,</span><br><span class="line">  seleniumAddress: <span class="string">'http://localhost:4444/wd/hub'</span>,</span><br><span class="line">  specs: [<span class="string">'spec.js'</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个配置是告诉 Protractor 选用的测试框架（<code>framewrok</code>）、测试文件的名称（<code>spec</code>）以及 selenuim server 地址（<code>selenuimAddress</code>）。它指定我们将使用 Jasmine 测试框架，对所有其他配置使用默认设置，Chrome是默认浏览器。  </p>
+<p>运行 Protractor 进行测试  </p>
+<figure class="highlight plain"><figcaption><span>conf.js```  </span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">你应该会看到一个Chrome浏览器窗口打开并导航到“计算器”，然后自行关闭。测试输出应为1个测试，1个断言，0个失败。恭喜，你已经进行了首次 protractor 测试！</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># 语法解析</span><br><span class="line">网页的端到端测试的核心是查找 DOM 元素，与之交互以及获取有关应用程序当前状态的信息，以下是如何使用 Protractor 在 DOM 元素上定位和执行操作的基本语法。</span><br><span class="line">## 定位器（Locators）</span><br><span class="line">&#96;&#96;&#96;javascript</span><br><span class="line">&#x2F;&#x2F; 通过 class 查找元素</span><br><span class="line">by.css(&#39;.myclass&#39;)</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 通过 id 查找元素</span><br><span class="line">by.id(&#39;myid&#39;)</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 通过 name 查找元素</span><br><span class="line">by.name(&#39;field_name&#39;)</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 通过 ng-model 查找元素</span><br><span class="line">&#x2F;&#x2F; 请注意，目前仅AngularJS应用支持此功能</span><br><span class="line">by.model(&#39;name&#39;)</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 查找绑定到给定变量的元素</span><br><span class="line">&#x2F;&#x2F; 请注意，目前仅AngularJS应用支持此功能</span><br><span class="line">by.binding(&#39;bindingname&#39;)</span><br></pre></td></tr></table></figure>
+<p>定位器传递给 element 函数如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">element(by.css(<span class="string">'some-css'</span>));</span><br><span class="line">element(by.model(<span class="string">'item.name'</span>));</span><br><span class="line">element(by.binding(<span class="string">'item.name'</span>));</span><br></pre></td></tr></table></figure>
+<p>使用 CSS 选择器作为定位器时，可以使用<code>$（）</code>快捷方式表示法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$(<span class="string">'my-css'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 这相当于:</span></span><br><span class="line"></span><br><span class="line">element(by.css(<span class="string">'my-css'</span>));</span><br></pre></td></tr></table></figure>
+
+<h2 id="触发事件（Action）"><a href="#触发事件（Action）" class="headerlink" title="触发事件（Action）"></a>触发事件（Action）</h2><p><code>element（）</code>函数返回一个ElementFinder对象， ElementFinder知道如何使用您作为参数传入的定位器来定位DOM元素，但实际上尚未这样做，在调用动作方法之前它不会与浏览器联系。 以下是最常见的触发方法：</p>
+<h3 id="单个元素"><a href="#单个元素" class="headerlink" title="单个元素"></a>单个元素</h3><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> el = element(locator);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 单击元素</span></span><br><span class="line">el.click();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将键值输入到元素（通常是 Input 框）。</span></span><br><span class="line">el.sendKeys(<span class="string">'my text'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清除元素的值 (通常是 Input 框).</span></span><br><span class="line">el.clear();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取 attribute 的值, 例如获取 Input 的 value</span></span><br><span class="line">el.getAttribute(<span class="string">'value'</span>);</span><br></pre></td></tr></table></figure>
+
+<p>由于所有动作都是异步的，因此所有动作方法都返回一个Promise，因此要记录元素的文本，可以执行以下操作：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> el = element(locator);</span><br><span class="line">el.getText().then(<span class="function"><span class="keyword">function</span>(<span class="params">text</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(text);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>WebFinder 上 WebDriverJS 中可用的任何操作都可以在 ElementFinder 中使用，<a href="http://www.protractortest.org/#/api?view=webdriver.WebElement" target="_blank" rel="noopener">查看完整清单</a>。</p>
+</blockquote>
+<h3 id="元素列表"><a href="#元素列表" class="headerlink" title="元素列表"></a>元素列表</h3><p>要处理多个DOM元素，使用element.all函数，定位器作为其唯一参数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">element.all(by.css(<span class="string">'.selector'</span>)).then(<span class="function"><span class="keyword">function</span>(<span class="params">elements</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// 查找器获取的是数组元素</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>element.all() 具有几个辅助方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 元素的数量</span></span><br><span class="line">element.all(locator).count();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 根据 Index 获取元素</span></span><br><span class="line">element.all(locator).get(index);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 第一个和最后一个元素</span></span><br><span class="line">element.all(locator).first();</span><br><span class="line">element.all(locator).last();</span><br></pre></td></tr></table></figure>
+<p>将 CSS 选择器用作定位器时，可以使用快捷方式 <code>$$（）</code>表示法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$$(<span class="string">'.selector'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 这相当于:</span></span><br><span class="line"></span><br><span class="line">element.all(by.css(<span class="string">'.selector'</span>));</span><br></pre></td></tr></table></figure>
+
+<h3 id="子元素"><a href="#子元素" class="headerlink" title="子元素"></a>子元素</h3><p>要查找子元素，只需将 element 和 element.all 函数链接在一起，如下所示：</p>
+<p>使用单个定位器查找：</p>
+<p>一个元素:</p>
+<ul>
+<li><p><code>element(by.css(&#39;some-css&#39;));</code><br>元素列表：</p>
+</li>
+<li><p><code>element.all(by.css(&#39;some-css&#39;));</code><br>使用链接的定位器查找：</p>
+</li>
+</ul>
+<p>子元素：</p>
+<ul>
+<li><p><code>element(by.css(&#39;some-css&#39;)).element(by.tagName(&#39;tag-within-css&#39;));</code><br>查找子元素列表：</p>
+</li>
+<li><p><code>element(by.css(&#39;some-css&#39;)).all(by.tagName(&#39;tag-within-css&#39;));</code><br>也可以使用 get / first / last 进行链接，如下所示：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">element.all(by.css(<span class="string">'some-css'</span>)).first().element(by.tagName(<span class="string">'tag-within-css'</span>));</span><br><span class="line">element.all(by.css(<span class="string">'some-css'</span>)).get(index).element(by.tagName(<span class="string">'tag-within-css'</span>));</span><br><span class="line">element.all(by.css(<span class="string">'some-css'</span>)).first().all(by.tagName(<span class="string">'tag-within-css'</span>));</span><br></pre></td></tr></table></figure></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2021/01/31/optimization/" rel="prev" title="【前端优化】首屏加载 9.2s 压缩至 3.6 s">
+      <i class="fa fa-chevron-left"></i> 【前端优化】首屏加载 9.2s 压缩至 3.6 s
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2021/03/31/git-rules/" rel="next" title="【Git分支管理】配合阿里云云效流水线实现前端CI/DI">
+      【Git分支管理】配合阿里云云效流水线实现前端CI/DI <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#关于-Protractor"><span class="nav-number">1.</span> <span class="nav-text">关于 Protractor</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#模拟用户真实测试流程"><span class="nav-number">1.1.</span> <span class="nav-text">模拟用户真实测试流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Angular-支持友好"><span class="nav-number">1.2.</span> <span class="nav-text">Angular 支持友好</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自动等待"><span class="nav-number">1.3.</span> <span class="nav-text">自动等待</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#安装配置"><span class="nav-number">2.</span> <span class="nav-text">安装配置</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装-Node"><span class="nav-number">2.1.</span> <span class="nav-text">安装 Node</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安装-Jdk"><span class="nav-number">2.2.</span> <span class="nav-text">安装 Jdk</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安装-Protractor"><span class="nav-number">2.3.</span> <span class="nav-text">安装 Protractor</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#官方用例"><span class="nav-number">3.</span> <span class="nav-text">官方用例</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#触发事件（Action）"><span class="nav-number">3.1.</span> <span class="nav-text">触发事件（Action）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#单个元素"><span class="nav-number">3.1.1.</span> <span class="nav-text">单个元素</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#元素列表"><span class="nav-number">3.1.2.</span> <span class="nav-text">元素列表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#子元素"><span class="nav-number">3.1.3.</span> <span class="nav-text">子元素</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Max Cheng</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Max Cheng</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

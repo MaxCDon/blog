@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"maxcdon.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="起因最近在项目线上环境中收集到客户反馈数值输入后展示值少了0.01，收到反馈后立刻定位代码中问题所在，原因就是上一个版本中此数值输入框改成非四舍五入截取两位小数，使用的方法是 1Math.floor(floatNum*100)&#x2F;100 这个看似没有什么问题的方法当floatNum的值为1.15时，就出现了 Js 浮点数精度引起的异常情况，看下图。  可以看到 1.15*100 在 Js 中计算结">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【JS浮点数】常见的JS浮点数精度问题及原理">
+<meta property="og:url" content="https://maxcdon.github.io/blog/2021/10/22/number/index.html">
+<meta property="og:site_name" content="MaxCheng&#39;blog">
+<meta property="og:description" content="起因最近在项目线上环境中收集到客户反馈数值输入后展示值少了0.01，收到反馈后立刻定位代码中问题所在，原因就是上一个版本中此数值输入框改成非四舍五入截取两位小数，使用的方法是 1Math.floor(floatNum*100)&#x2F;100 这个看似没有什么问题的方法当floatNum的值为1.15时，就出现了 Js 浮点数精度引起的异常情况，看下图。  可以看到 1.15*100 在 Js 中计算结">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/70617c01fab34c4395d87f6eaefe162f~tplv-k3u1fbpfcp-zoom-crop-mark:1304:1304:1304:734.awebp">
+<meta property="og:image" content="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/28fdee9d86554714b5c43a575408c223~tplv-k3u1fbpfcp-watermark.image">
+<meta property="og:image" content="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/103ee6a0c5e6471fbdb84c4b0b025b9f~tplv-k3u1fbpfcp-watermark.image">
+<meta property="og:image" content="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9c096c0960fd4259a7b281d42af8d29f~tplv-k3u1fbpfcp-watermark.image">
+<meta property="og:image" content="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/14003a64d4d74d599354d69acd1e45d0~tplv-k3u1fbpfcp-watermark.image">
+<meta property="article:published_time" content="2021-10-22T06:50:34.000Z">
+<meta property="article:modified_time" content="2021-10-22T06:58:49.807Z">
+<meta property="article:author" content="Max Cheng">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/70617c01fab34c4395d87f6eaefe162f~tplv-k3u1fbpfcp-zoom-crop-mark:1304:1304:1304:734.awebp">
+
+<link rel="canonical" href="https://maxcdon.github.io/blog/2021/10/22/number/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>【JS浮点数】常见的JS浮点数精度问题及原理 | MaxCheng'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">MaxCheng'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">step by step</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://maxcdon.github.io/blog/2021/10/22/number/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="Max Cheng">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MaxCheng'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【JS浮点数】常见的JS浮点数精度问题及原理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2021-10-22 14:50:34 / Modified: 14:58:49" itemprop="dateCreated datePublished" datetime="2021-10-22T14:50:34+08:00">2021-10-22</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/70617c01fab34c4395d87f6eaefe162f~tplv-k3u1fbpfcp-zoom-crop-mark:1304:1304:1304:734.awebp?" alt="image.png"></p>
+<h1 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h1><p>最近在项目线上环境中收集到客户反馈数值输入后展示值少了<code>0.01</code>，收到反馈后立刻定位代码中问题所在，原因就是上一个版本中此数值输入框改成<strong>非四舍五入截取两位小数</strong>，使用的方法是</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Math</span>.floor(floatNum*<span class="number">100</span>)/<span class="number">100</span></span><br></pre></td></tr></table></figure>
+<p>这个看似没有什么问题的方法当<code>floatNum</code>的值为<code>1.15</code>时，就出现了 Js 浮点数精度引起的异常情况，看下图。</p>
+<p><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/28fdee9d86554714b5c43a575408c223~tplv-k3u1fbpfcp-watermark.image?" alt="image.png"></p>
+<p>可以看到 <code>1.15*100</code> 在 Js 中计算结果并非为 <code>115</code>而是<code>114.99999999999999</code>，由此通过 <code>Math.floor()</code>向下取整并除以<code>100</code>时得到的最终结果是<code>1.14</code>，与预期结果正好相差<code>0.01</code>。</p>
+<p>定位到问题所在后立刻进行修复，决定抛弃的浮点数计算的方式，使用转换成字符串截取的方案。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">  * 保留小数（不四舍五入）</span></span><br><span class="line"><span class="comment">  * <span class="doctag">@param </span>floatNum 输入值</span></span><br><span class="line"><span class="comment">  * <span class="doctag">@param </span>decimal 保留浮点数精度位数</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">formatDecimal(floatNum, decimal) &#123;</span><br><span class="line">    <span class="keyword">let</span> result = floatNum.toString();</span><br><span class="line">    <span class="keyword">const</span> index = result.indexOf(<span class="string">'.'</span>);</span><br><span class="line">    <span class="keyword">if</span> (index !== <span class="number">-1</span>) &#123;</span><br><span class="line">      result = result.substring(<span class="number">0</span>, decimal + index + <span class="number">1</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      result = result.substring(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">parseFloat</span>(result);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>在问题解决后，决定对 Js 浮点数进行梳理，并列举一些可能遇到的精度问题。</p>
+<h1 id="Js-浮点数"><a href="#Js-浮点数" class="headerlink" title="Js 浮点数"></a>Js 浮点数</h1><h2 id="标准与储存方式"><a href="#标准与储存方式" class="headerlink" title="标准与储存方式"></a>标准与储存方式</h2><p>Js 没有单独的浮点型，浮点数与整数都是通过 Number 类型表示，是遵循 <code>IEEE754标准</code>的 64 位双精度值，在二进制中 64 位由三个部分组成。</p>
+<ul>
+<li><p>sign bit（符号S）：用来表示正负号，0代表正数，1代表负数</p>
+</li>
+<li><p>exponent（指数E）：用来表示次方数，中间11位</p>
+</li>
+<li><p>mantissa（尾数M）：用来表示精确度, 超出的部分自动进一舍零，最后52位</p>
+</li>
+</ul>
+<p><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/103ee6a0c5e6471fbdb84c4b0b025b9f~tplv-k3u1fbpfcp-watermark.image?" alt="image.png"></p>
+<p>在二进制的科学记数法中，<code>IEEE754标准</code>的 64 位双精度值数字被公式表示为：</p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9c096c0960fd4259a7b281d42af8d29f~tplv-k3u1fbpfcp-watermark.image?" alt="image.png"></p>
+<p>在十进制的科学记数法中 <code>1 &lt;= M &lt; 10</code>，同理在二进制科学记数法中 <code>1 &lt;= M &lt; 2</code>，所以 M 的整数部分只能是 1， 可以舍去，M 只存储后面小数部分。指数 E 是 11 位，在大能表示的数是 <code>2047 (2^11 - 1)</code>，由于指数包含正与负，所以取中间值 <code>1023</code> 临界值，<code>[1024, 2047]</code> 表示正指数，<code>[0, 1022]</code> 表示负指数。</p>
+<p>以 4.5 为例转换成二进制是 <code>100.1</code>，用二进制科学记数法表示就是 <code>1.001 * 2^2</code>。 代入公式 1.001 舍去 1 尾数 M 是 001，指数 E 是 2 + 1023 = 1025 (二进制 <code>10000000001</code>)，正数 S 取 0，所以组合在一起 4.5 在 IEEE754 双精度64位标准表示如下。</p>
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/14003a64d4d74d599354d69acd1e45d0~tplv-k3u1fbpfcp-watermark.image?" alt="image.png"><br>图片源自于<a href="http://www.binaryconvert.com/result_double.html?decimal=052046053" target="_blank" rel="noopener">binaryconvert</a></p>
+<h2 id="哪些常见的精度问题及背后原理"><a href="#哪些常见的精度问题及背后原理" class="headerlink" title="哪些常见的精度问题及背后原理"></a>哪些常见的精度问题及背后原理</h2><p>明白了 Js 中浮点数的标准与储存方式，再回到实际场景中看看有哪些常见的浮点数精度问题极其原因。</p>
+<h3 id="场景一-0-1-0-2-0-3"><a href="#场景一-0-1-0-2-0-3" class="headerlink" title="场景一  0.1 + 0.2 != 0.3"></a>场景一  <code>0.1 + 0.2 != 0.3</code></h3><p>0.1、0.2 以及相加的和的<strong>二进制</strong>表示如下 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">0.1 -&gt; 0.0001 1001 1001 1001 1001 1001 1001 1001 1001 1001 1001 1001 1001 1010 (1001循环 进一舍零)</span><br><span class="line">0.2 -&gt; 0.0011 0011 0011 0011 0011 0011 0011 0011 0011 0011 0011 0011 0011 010 (0011循环 进一舍零)</span><br><span class="line">相加 -&gt; 0.0100 1100 1100 1100 1100 1100 1100 1100 1100 1100 1100 1100 1100 111</span><br></pre></td></tr></table></figure>
+
+<p>相加所得的值转换成<strong>十进制</strong>恰好为 <code>0.30000000000000004</code></p>
+<p>(<a href="https://www.runoob.com/w3cnote/decimal-decimals-are-converted-to-binary-fractions.html" target="_blank" rel="noopener">十进制小数转化为二进制小数计算方式</a>)</p>
+<p>(<a href="https://www.sojson.com/hexconvert.html" target="_blank" rel="noopener">十进制小数转化为二进制小数计算工具</a>)</p>
+<h3 id="场景二-1-335-toFixed-2-1-33"><a href="#场景二-1-335-toFixed-2-1-33" class="headerlink" title="场景二 (1.335).toFixed(2) == 1.33"></a>场景二 <code>(1.335).toFixed(2) == 1.33</code></h3><p>浮点数精度和 toFixed 其实属于同一类问题，都是由于浮点数无法精确表示引起的，如下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(<span class="number">1.335</span>).toPrecision(<span class="number">20</span>);    <span class="comment">// "1.3349999999999999645"</span></span><br></pre></td></tr></table></figure>
+
+<p>toFixed() 方法实则是对 1.3349999999999999645 四舍五入保留两位小数</p>
+<h3 id="场景三-大数问题61453901951867050-5-61453901951867060"><a href="#场景三-大数问题61453901951867050-5-61453901951867060" class="headerlink" title="场景三 大数问题61453901951867050 + 5 == 61453901951867060"></a>场景三 大数问题<code>61453901951867050 + 5 == 61453901951867060</code></h3><p>因为 Javascript 的数字存储使用了 IEEE 754 中规定的双精度浮点数数据类型，而这一数据类型能够安全存储 (2^53 - 1) 到 -(2^53 - 1) 之间的数值（包含边界值）。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Number</span>.MAX_SAFE_INTEGER === <span class="built_in">Math</span>.pow(<span class="number">2</span>, <span class="number">53</span>) - <span class="number">1</span> <span class="comment">// true 最大安全整数</span></span><br><span class="line"><span class="built_in">Number</span>.MIN_SAFE_INTEGER === -(<span class="built_in">Math</span>.pow(<span class="number">2</span>, <span class="number">53</span>) - <span class="number">1</span>) <span class="comment">// true 最小安全整数</span></span><br></pre></td></tr></table></figure>
+
+<p>这里安全存储的意思是指能够准确区分两个不相同的值，例如:</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Number</span>.MAX_SAFE_INTEGER + <span class="number">1</span> === <span class="built_in">Number</span>.MAX_SAFE_INTEGER + <span class="number">2</span> <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>将得到 true 的结果，而这在数学上是错误的<br>因为遵循 IEEE754 标准 JavaScript 中最大的安全整数 <strong>Number.MAX_SAFE_INTEGER</strong></p>
+<p>在场景三中，其数值 61453901951867050 超过最大安全整数，导致相加结果不准确。 </p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">61453901951867050</span> &gt; <span class="built_in">Number</span>.MAX_SAFE_INTEGER <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="解决精度问题的方案"><a href="#解决精度问题的方案" class="headerlink" title="解决精度问题的方案"></a>解决精度问题的方案</h2><p>假如我们要判断 0.1 + 0.2 是否等于 0.3</p>
+<p>可以判断两边之差的绝对值是否小于 <code>Number.EPSILON</code>（浮点数之间最小差，如下：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Math</span>.abs(<span class="number">0.1</span> + <span class="number">0.2</span> - <span class="number">0.3</span>) &lt; <span class="built_in">Number</span>.EPSILON <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>若小于  Number.EPSILON 则认为等式成立。</p>
+<p>但这种方式只能判断两边等式是否成立，如需要计算浮点数的精确计算值还需要利用其他方法。</p>
+<p>目前社区已经有了很多较为成熟的库，比如 <a href="https://github.com/MikeMcl/bignumber.js" target="_blank" rel="noopener">bignumber.js</a>，<a href="https://github.com/MikeMcl/decimal.js" target="_blank" rel="noopener">decimal.js</a>，以及 <a href="https://github.com/MikeMcl/big.js" target="_blank" rel="noopener">big.js</a> 等。我们可以根据自己的需求来选择对应的工具。这些库不仅解决了浮点数的运算精度问题，还支持了大数运算，并且修复了原生 toFixed 结果不准确的问题。</p>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>感谢阅读，若有不足，欢迎指正。  </p>
+<p>提前祝 XDM 1024 节快乐~</p>
+<h1 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h1><p><a href="https://zh.wikipedia.org/wiki/IEEE_754" target="_blank" rel="noopener">Wikipedia-IEEE754</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/73699947" target="_blank" rel="noopener">老生常谈之js浮点数精度</a></p>
+<p><a href="https://juejin.cn/post/6844903572979597319" target="_blank" rel="noopener">JS中浮点数精度问题</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2021/03/31/git-rules/" rel="prev" title="【Git分支管理】配合阿里云云效流水线实现前端CI/DI">
+      <i class="fa fa-chevron-left"></i> 【Git分支管理】配合阿里云云效流水线实现前端CI/DI
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#起因"><span class="nav-number">1.</span> <span class="nav-text">起因</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Js-浮点数"><span class="nav-number">2.</span> <span class="nav-text">Js 浮点数</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#标准与储存方式"><span class="nav-number">2.1.</span> <span class="nav-text">标准与储存方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#哪些常见的精度问题及背后原理"><span class="nav-number">2.2.</span> <span class="nav-text">哪些常见的精度问题及背后原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#场景一-0-1-0-2-0-3"><span class="nav-number">2.2.1.</span> <span class="nav-text">场景一  0.1 + 0.2 !&#x3D; 0.3</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景二-1-335-toFixed-2-1-33"><span class="nav-number">2.2.2.</span> <span class="nav-text">场景二 (1.335).toFixed(2) &#x3D;&#x3D; 1.33</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景三-大数问题61453901951867050-5-61453901951867060"><span class="nav-number">2.2.3.</span> <span class="nav-text">场景三 大数问题61453901951867050 + 5 &#x3D;&#x3D; 61453901951867060</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解决精度问题的方案"><span class="nav-number">2.3.</span> <span class="nav-text">解决精度问题的方案</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#结语"><span class="nav-number">3.</span> <span class="nav-text">结语</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文献"><span class="nav-number">4.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Max Cheng</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Max Cheng</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

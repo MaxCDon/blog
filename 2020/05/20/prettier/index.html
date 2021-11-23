@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"maxcdon.github.io","root":"/blog/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="背景考虑到团队新加入的小伙伴越来越多，多人协作开发的规范也得跟上。在此之前我们引入了Angular团队的Git使用规范，获得了不错的反响，接下来就需要对风格迥异的前端代码进行格式规范。 工具prettier是目前前端代码格式化工具中最热门的，在选择插件时也是优先选择了它。我们的方案把prettier集成进代码并且配合着vscode上的prettier插件一同使用。 项目引入prettier首先需">
+<meta property="og:type" content="article">
+<meta property="og:title" content="前端代码格式工具Prettier">
+<meta property="og:url" content="https://maxcdon.github.io/blog/2020/05/20/prettier/index.html">
+<meta property="og:site_name" content="MaxCheng&#39;blog">
+<meta property="og:description" content="背景考虑到团队新加入的小伙伴越来越多，多人协作开发的规范也得跟上。在此之前我们引入了Angular团队的Git使用规范，获得了不错的反响，接下来就需要对风格迥异的前端代码进行格式规范。 工具prettier是目前前端代码格式化工具中最热门的，在选择插件时也是优先选择了它。我们的方案把prettier集成进代码并且配合着vscode上的prettier插件一同使用。 项目引入prettier首先需">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://user-gold-cdn.xitu.io/2020/5/9/171f85d9f4172b99?imageView2/1/w/1304/h/734/q/85/format/webp/interlace/1">
+<meta property="og:image" content="https://user-gold-cdn.xitu.io/2020/5/9/171f84d906e7ea5f?w=687&h=158&f=png&s=19094">
+<meta property="article:published_time" content="2020-05-20T07:36:17.000Z">
+<meta property="article:modified_time" content="2020-12-18T02:31:05.699Z">
+<meta property="article:author" content="Max Cheng">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://user-gold-cdn.xitu.io/2020/5/9/171f85d9f4172b99?imageView2/1/w/1304/h/734/q/85/format/webp/interlace/1">
+
+<link rel="canonical" href="https://maxcdon.github.io/blog/2020/05/20/prettier/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>前端代码格式工具Prettier | MaxCheng'blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">MaxCheng'blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">step by step</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://maxcdon.github.io/blog/2020/05/20/prettier/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="Max Cheng">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MaxCheng'blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          前端代码格式工具Prettier
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-05-20 15:36:17" itemprop="dateCreated datePublished" datetime="2020-05-20T15:36:17+08:00">2020-05-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-18 10:31:05" itemprop="dateModified" datetime="2020-12-18T10:31:05+08:00">2020-12-18</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://user-gold-cdn.xitu.io/2020/5/9/171f85d9f4172b99?imageView2/1/w/1304/h/734/q/85/format/webp/interlace/1" alt=""></p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>考虑到团队新加入的小伙伴越来越多，多人协作开发的规范也得跟上。在此之前我们引入了Angular团队的Git使用规范，获得了不错的反响，接下来就需要对风格迥异的前端代码进行格式规范。</p>
+<h1 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h1><p>prettier是目前前端代码格式化工具中最热门的，在选择插件时也是优先选择了它。我们的方案把prettier集成进代码并且配合着vscode上的prettier插件一同使用。</p>
+<h2 id="项目引入prettier"><a href="#项目引入prettier" class="headerlink" title="项目引入prettier"></a>项目引入prettier</h2><p>首先需要在项目中安装prttier包</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install prettier --save-dev --save-exact</span><br></pre></td></tr></table></figure>
+<p>第二步在项目根目录下新建一个.prettier配置文件，配置文件可以是JSON、JS、YAML等格式，在这里我们选用的是JSON。然后就可以根据官方文档提供的配置项来制定我们格式规范。<br>prettier的可配置项不多，可以看<a href="https://prettier.io/docs/en/options.html" target="_blank" rel="noopener">官方文档</a>大致过一遍。<br><br>以下是我们的配置（注释只作展示使用，请勿复制进去）:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;printWidth&quot;: 80, &#x2F;&#x2F; 超过最大值换行</span><br><span class="line">  &quot;tabWidth&quot;: 2, &#x2F;&#x2F; 缩进字节数</span><br><span class="line">  &quot;useTabs&quot;: false, &#x2F;&#x2F; 不使用缩进符，而使用空格</span><br><span class="line">  &quot;semi&quot;: true, &#x2F;&#x2F; 句末添加分号</span><br><span class="line">  &quot;singleQuote&quot;: true, &#x2F;&#x2F; 使用单引号代替双引号</span><br><span class="line">  &quot;proseWrap&quot;: &quot;preserve&quot;, &#x2F;&#x2F; 使用默认的折行标准</span><br><span class="line">  &quot;arrowParens&quot;: &quot;avoid&quot;, &#x2F;&#x2F; (x) &#x3D;&gt; &#123;&#125; 箭头函数参数只有一个时是否要有小括号。avoid：省略括号</span><br><span class="line">  &quot;bracketSpacing&quot;: true,  &#x2F;&#x2F; 在对象，数组括号与文字之间加空格 &quot;&#123; foo: bar &#125;&quot;</span><br><span class="line">  &quot;endOfLine&quot;: &quot;auto&quot;, &#x2F;&#x2F; 结尾是 \n \r \n\r auto</span><br><span class="line">  &quot;htmlWhitespaceSensitivity&quot;: &quot;css&quot;, &#x2F;&#x2F; 根据显示样式决定 html 要不要折行</span><br><span class="line">  &quot;jsxBracketSameLine&quot;: false, &#x2F;&#x2F; 在jsx中把&#39;&gt;&#39; 是否单独放一行</span><br><span class="line">  &quot;jsxSingleQuote&quot;: false, &#x2F;&#x2F; 在jsx中使用单引号代替双引号</span><br><span class="line">  &quot;trailingComma&quot;: &quot;es5&quot; &#x2F;&#x2F; 在对象或数组最后一个元素后面是否加逗号（在ES5中加尾逗号）</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>到这里Prettier的基本配置就完成了，你可以测试一下配置是否生效。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">prettier --write [file&#x2F;dir&#x2F;glob ...]</span><br></pre></td></tr></table></figure>
+<p>执行命令如果看到文件按配置被格式化，说明你的prettier已经配置成功！<br>但是每一次格式化都需要手动输入命令触发，这样的体验并不是很完美。</p>
+<h2 id="自动格式化Pre-commit-Hook"><a href="#自动格式化Pre-commit-Hook" class="headerlink" title="自动格式化Pre-commit Hook"></a>自动格式化Pre-commit Hook</h2><p>prettier官方文档提供了Pre-commit Hook，你可以把git add暂存的文件在被commit提交之前自动执行prettier格式化。</p>
+<p>首先安装pretty-quick husky插件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install pretty-quick husky --save-dev</span><br></pre></td></tr></table></figure>
+<p>然后在package.json中加入配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;husky&quot;: &#123;</span><br><span class="line">    &quot;hooks&quot;: &#123;</span><br><span class="line">      &quot;pre-commit&quot;: &quot;pretty-quick --staged&quot;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用git提交测试文件，可以看到提交的文件自动被格式化。</p>
+<h2 id="Vscode插件-Prettier-Code-formatter"><a href="#Vscode插件-Prettier-Code-formatter" class="headerlink" title="Vscode插件  Prettier - Code formatter"></a>Vscode插件  Prettier - Code formatter</h2><p>我们已经在项目中集成了prettier，并且使用钩子在git提交代码的时候自动格式化相应的文件，但是这样子只能在最后提交之后才能看到代码格式化的效果，很多同学都有使用编辑器格式化代码的习惯，我们也可以在vscode中同步prettier配置。</p>
+<p>首先在vscode中安装插件 Prettier - Code formatter</p>
+<p><img src="https://user-gold-cdn.xitu.io/2020/5/9/171f84d906e7ea5f?w=687&h=158&f=png&s=19094" alt=""></p>
+<p>然后在vscode的setting.json中引入prettier配置项</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&quot;prettier&quot;: &#123;</span><br><span class="line">  &quot;printWidth&quot;: 80,</span><br><span class="line">  &quot;tabWidth&quot;: 2,</span><br><span class="line">  &quot;useTabs&quot;: false,</span><br><span class="line">  &quot;semi&quot;: true,</span><br><span class="line">  &quot;singleQuote&quot;: true,</span><br><span class="line">  &quot;proseWrap&quot;: &quot;preserve&quot;,</span><br><span class="line">  &quot;arrowParens&quot;: &quot;avoid&quot;,</span><br><span class="line">  &quot;bracketSpacing&quot;: true,</span><br><span class="line">  &quot;endOfLine&quot;: &quot;auto&quot;,</span><br><span class="line">  &quot;htmlWhitespaceSensitivity&quot;: &quot;css&quot;,</span><br><span class="line">  &quot;jsxBracketSameLine&quot;: false,</span><br><span class="line">  &quot;jsxSingleQuote&quot;: false,</span><br><span class="line">  &quot;trailingComma&quot;: &quot;es5&quot;</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+<p>大功告成，此时vscode的格式化配置已经与我们项目集成的prettier同步了，接下来就可以愉快的编码了~</p>
+<h1 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h1><p>在多人协作的开发过程中有强规范来约定开发格式能够提升开发效率和易维护性。随着项目越来越壮大，需要优化和规范的点还非常多，欢迎伙伴们一起交流~</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/blog/2020/11/29/arms/" rel="next" title="阿里云ARMS前端监控Angular接入实战">
+      阿里云ARMS前端监控Angular接入实战 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#工具"><span class="nav-number">2.</span> <span class="nav-text">工具</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#项目引入prettier"><span class="nav-number">2.1.</span> <span class="nav-text">项目引入prettier</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自动格式化Pre-commit-Hook"><span class="nav-number">2.2.</span> <span class="nav-text">自动格式化Pre-commit Hook</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Vscode插件-Prettier-Code-formatter"><span class="nav-number">2.3.</span> <span class="nav-text">Vscode插件  Prettier - Code formatter</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#结束语"><span class="nav-number">3.</span> <span class="nav-text">结束语</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Max Cheng</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Max Cheng</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/muse.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
