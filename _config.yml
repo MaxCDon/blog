@@ -100,4 +100,4 @@ theme: next
 deploy:
   type: git
   repository: git@github.com:MaxCDon/blog.git
-  branch: gh-pages
+  branch: master
