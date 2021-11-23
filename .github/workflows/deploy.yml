@@ -1,67 +1,60 @@
-name: CI
+name: Hexo Deploy
 
 on:
   push:
     branches:
       - master
 
-env:
-  GIT_USER: maxCDon
-  GIT_EMAIL: immaxcheng@foxmail.com
-  THEME_REPO: theme-next/hexo-theme-next
-  THEME_BRANCH: master
-  DEPLOY_REPO: MaxCDon/blog
-  DEPLOY_BRANCH: gh-pages
-
 jobs:
   build:
-    name: Build on node ${{ matrix.node_version }} and ${{ matrix.os }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node_version: [12.x]
+    runs-on: ubuntu-18.04
+    if: github.event.repository.owner.id == github.event.sender.id
+    env:
+      MY_SECRET   : ${{secrets.GH_TOKEN}}
+      USER_NAME   : MaxCDon
+      USER_EMAIL  : immaxcheng@foxmail.com
+      PUBLISH_DIR : ./public
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Checkout theme repo
+      - name: Checkout source
         uses: actions/checkout@v2
         with:
-          repository: ${{ env.THEME_REPO }}
-          ref: ${{ env.THEME_BRANCH }}
-          path: themes/next
+          ref: master
 
-      - name: Checkout deploy repo
-        uses: actions/checkout@v2
-        with:
-          repository: ${{ env.DEPLOY_REPO }}
-          ref: ${{ env.DEPLOY_BRANCH }}
-          path: .deploy_git
-
-      - name: Use Node.js ${{ matrix.node_version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: ${{ matrix.node_version }}
+          node-version: '12'
 
-      - name: Configuration environment
+      - name: Setup Hexo
         env:
-          HEXO_DEPLOY_PRI: ${{secrets.HEXO_DEPLOY_KEY}}
+          ACTION_DEPLOY_KEY: ${{ secrets.HEXO_DEPLOY_KEY }}
         run: |
-          sudo timedatectl set-timezone "Asia/Shanghai"
           mkdir -p ~/.ssh/
-          echo "$HEXO_DEPLOY_PRI" > ~/.ssh/id_rsa
+          echo "$ACTION_DEPLOY_KEY" > ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
-          git config --global user.name $GIT_USER
-          git config --global user.email $GIT_EMAIL
-
-      - name: Install dependencies
-        run: |
+          git config --global user.email $USER_NAME
+          git config --global user.name $USER_EMAIL
+          npm install hexo-cli -g
           npm install
 
-      - name: Deploy hexo
+      - name: Deploy
         run: |
-          npm run deploy
-          PUBLISH_DIR: ./public # 部署 public 目录下的文件
+          hexo clean
+          hexo deploy
+
+      - name: Commit files
+        run: |
+          cd PUBLISH_DIR
+          git init
+          git config --local user.name $USER_NAME
+          git config --local user.email $USER_EMAIL
+          git status
+          git remote add origin https://$MY_SECRET@github.com/MaxCDon/blog.git
+          git checkout -b gh-pages
+          git add --all
+          git commit -m "deploy to Github pages"
+          git push origin gh-pages -f
+          echo 🤘 deploy gh-pages complete.
